@@ -1,13 +1,13 @@
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.w3c.dom.xpath.XPathResult;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.util.*;
 
 public class Server {
     // listen to port
@@ -19,16 +19,14 @@ public class Server {
             "packages", "/transactions/packages",
             "cards", "deck", "tradings", "score", "stats");
 
-    // HashMap for http request header and body
-    private HashMap<String, String> requestMap=new HashMap<String, String>();
-
     // constructor
     public Server () throws IOException {
         // init ServerSocket
         this.serverSocket = new ServerSocket(this.port);
     }
 
-    public void parseHttpRequest(Socket socket) throws IOException {
+    public HashMap<String, JSONObject> parseHttpRequest(Socket socket) throws IOException {
+        HashMap<String, JSONObject> resultMap= new HashMap<>();
         // idea from  https://stackoverflow.com/questions/34143039/extracting-the-body-from-http-post-requesth
         // 建立好连接后, 从socket中获取输入流, 并建立缓冲区进行读取
         InputStream inputStream = socket.getInputStream();
@@ -50,60 +48,99 @@ public class Server {
                 hasBody = true;
             }
         }
-
-//        parseHeader(headStrBuilder.toString());
-        // add header to hashMap
-        requestMap.put("header", headStrBuilder.toString());
+        System.out.println(headStrBuilder.toString());
+        JSONObject headerJson = parseHeader(headStrBuilder.toString());
+        resultMap.put("head", headerJson);
 
         // read body
         if (hasBody){
             char[] body = new char[bodyLength];
             bufferedReader.read(body, 0, bodyLength);
             requestBody = new String(body);
-            parseBody(requestBody);
+            JSONObject bodyJson = parseBody(requestBody);
+            resultMap.put("body", bodyJson);
+
         }
 
-        // add body to hashMap
-        requestMap.put("body", requestBody);
-
+        return resultMap;
     }
 
     // parse header
-    public void parseHeader(String headStr){
+    public JSONObject parseHeader(String headStr){
         String[] headLines = headStr.split("\r\n");
-        String[] pathLine = headLines[0].split("\\s");
-        String method = "method: " + pathLine[0];
-        String url = "url: " + pathLine[1];
-        String otherLines = Arrays.copyOfRange(headLines, 1, headLines.length + 1).toString();
+        // loop through strings[]
+        String[] firstLine = headLines[0].split(" ");
+        String method = firstLine[0];
+        String url = firstLine[1];
+        HashMap<String, String> tmpMap = new HashMap<>();
+        tmpMap.put("method", method);
+        tmpMap.put("url", url.substring(1));
+
         // jsonobject
-        JSONObject headJson = new JSONObject(method +  url + otherLines);
-        JSONArray keys = headJson.names ();
-        for (int i = 0; i < keys.length (); i++) {
-            String key = keys.getString (i); // Here's your key
-            String value = headJson.getString (key); // Here's your value
-            System.out.println(value);
-        }
+        return new JSONObject(tmpMap);
     }
 
     // parser body
-    public void parseBody(String bodyStr){
-        System.out.println(bodyStr);
+    public JSONObject parseBody(String bodyStr){
         // json object
         JSONObject bodyJson = new JSONObject(bodyStr);
-        JSONArray keys = bodyJson.names ();
-        for (int i = 0; i < keys.length (); i++) {
-            String key = keys.getString (i); // Here's your key
-            String value = bodyJson.getString (key); // Here's your value
-            System.out.println(value);
-        }
-
+        return new JSONObject(bodyStr);
     }
 
     // parse url
-    public void parseURL(String urlStr){}
+    public JSONObject responseData(JSONObject headJSON, JSONObject bodyJSON){
+        String method = (String) headJSON.get("method");
+        String url = (String) headJSON.get("url");
+        String name = null;
+        String password = null;
+        JSONObject response = new JSONObject("{}");
 
+        JSONArray keys = bodyJSON.names ();
+        for (int i = 0; i < keys.length (); i++) {
+            String key = keys.getString (i); // Here's your key
+            String value = bodyJSON.getString (key); // Here's your value
+            if (key.equals("Username")){
+                name = value;
+            }
+            if (key.equals("Password")){
+                password = value;
+            }
+        }
 
+        // register user
+        if (method.equals("POST") & url.equals("users")){
+            response = registerUser(name, password);
+        }
 
+        // register user
+        if (method.equals("POST") & url.equals("sessions")){
+            response = loginUser(name, password);
+        }
+
+        return response;
+    }
+
+    public JSONObject registerUser(String name, String password){
+        String SQLQuery = "INSERT INTO usertable (name, password) values(?, ?)";
+        return CRUD.add(SQLQuery, name, password);
+    }
+
+    public JSONObject loginUser(String name, String password){
+        String SQLQuery = "select * from usertable where name = ?";
+        JSONObject tmp = CRUD.get(SQLQuery, name);
+        if (!tmp.has("Error")){
+            if (tmp.has("name")){
+                String userName = tmp.getString ("name");
+                String userPassWord = tmp.getString ("password");
+                if (userName.equals(name) & userPassWord.equals(password)){
+                    return new JSONObject("{\"message\":\"Successfully Login\"}");
+                }else{
+                    return new JSONObject("{\"Error\":\"Invaild password\"}");
+                }
+            }
+        }
+        return tmp;
+    }
     public static void main (String[] args) throws IOException {
         // init the server
         Server s = new Server();
@@ -115,18 +152,15 @@ public class Server {
             Socket socket = s.serverSocket.accept();
 
             // get data from http request
-            s.parseHttpRequest(socket);
-            System.out.println("get header message from client: \n" + s.requestMap.get("header"));
-            if (s.requestMap.containsKey("body")){
-                System.out.println("get body message from client: \n" + s.requestMap.get("body"));
-            }
-
-            JSONObject json = new JSONObject();
-            json.put("type", "CONNECT");
+            HashMap<String, JSONObject> map = s.parseHttpRequest(socket);
+            // get head json
+            JSONObject headJSon = map.get("head");
+            JSONObject bodyJSON = map.get("body");
+            JSONObject responsed = s.responseData(headJSon, bodyJSON);
 
             OutputStream outputStream = socket.getOutputStream();
             // write message to client
-            outputStream.write(json.toString().getBytes("UTF-8"));
+            outputStream.write(responsed.toString().getBytes("UTF-8"));
 
             // close the connection
             outputStream.close();
