@@ -1,13 +1,11 @@
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.xpath.XPathResult;
-
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class Server {
     // listen to port
@@ -48,7 +46,6 @@ public class Server {
                 hasBody = true;
             }
         }
-        System.out.println(headStrBuilder.toString());
         JSONObject headerJson = parseHeader(headStrBuilder.toString());
         resultMap.put("head", headerJson);
 
@@ -75,6 +72,11 @@ public class Server {
         HashMap<String, String> tmpMap = new HashMap<>();
         tmpMap.put("method", method);
         tmpMap.put("url", url.substring(1));
+        for (String line:headLines){
+            if (line.contains("Authorization:")){
+                tmpMap.put("authorization", line.split("\\s")[2]);
+            }
+        }
 
         // jsonobject
         return new JSONObject(tmpMap);
@@ -83,7 +85,6 @@ public class Server {
     // parser body
     public JSONObject parseBody(String bodyStr){
         // json object
-        JSONObject bodyJson = new JSONObject(bodyStr);
         return new JSONObject(bodyStr);
     }
 
@@ -95,52 +96,31 @@ public class Server {
         String password = null;
         JSONObject response = new JSONObject("{}");
 
-        JSONArray keys = bodyJSON.names ();
-        for (int i = 0; i < keys.length (); i++) {
-            String key = keys.getString (i); // Here's your key
-            String value = bodyJSON.getString (key); // Here's your value
-            if (key.equals("Username")){
-                name = value;
-            }
-            if (key.equals("Password")){
-                password = value;
-            }
-        }
 
         // register user
         if (method.equals("POST") & url.equals("users")){
-            response = registerUser(name, password);
+            response = UserSQL.register(bodyJSON);
         }
 
         // register user
         if (method.equals("POST") & url.equals("sessions")){
-            response = loginUser(name, password);
+            response = UserSQL.login(bodyJSON);
+        }
+
+        // edit user profile
+        if (method.equals("PUT") & Pattern.matches("users/[a-zA-Z0-9]+", url)){
+            response = UserSQL.updateUserProfile(headJSON, bodyJSON);
+
+        }
+        // get user profile
+        if (method.equals("GET") & Pattern.matches("users/[a-zA-Z0-9]+", url)){
+            response = UserSQL.getUserProfile(headJSON);
+
         }
 
         return response;
     }
 
-    public JSONObject registerUser(String name, String password){
-        String SQLQuery = "INSERT INTO usertable (name, password) values(?, ?)";
-        return CRUD.add(SQLQuery, name, password);
-    }
-
-    public JSONObject loginUser(String name, String password){
-        String SQLQuery = "select * from usertable where name = ?";
-        JSONObject tmp = CRUD.get(SQLQuery, name);
-        if (!tmp.has("Error")){
-            if (tmp.has("name")){
-                String userName = tmp.getString ("name");
-                String userPassWord = tmp.getString ("password");
-                if (userName.equals(name) & userPassWord.equals(password)){
-                    return new JSONObject("{\"message\":\"Successfully Login\"}");
-                }else{
-                    return new JSONObject("{\"Error\":\"Invaild password\"}");
-                }
-            }
-        }
-        return tmp;
-    }
     public static void main (String[] args) throws IOException {
         // init the server
         Server s = new Server();
