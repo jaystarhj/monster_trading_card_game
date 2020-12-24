@@ -11,7 +11,7 @@ public class CRUD {
     // for better error print
     private static final Logger LOGGER = Logger.getLogger(JdbcConnection.class.getName());
 
-    // common method for create, update, delete
+    // common method for insert, update, delete
     public static int CUDSql(String sqlQuery, Object... objects){
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -39,7 +39,6 @@ public class CRUD {
     public static ResultSet ReadSql(String sqlQuery, Object... objects){
         Connection conn = null;
         PreparedStatement stmt = null;
-        ResultSet resultSet = null;
         try{
             // 链接数据库
             conn = JdbcConnection.getConnection();

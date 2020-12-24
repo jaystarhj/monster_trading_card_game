@@ -31,7 +31,9 @@ public class UserSQL {
             while (resultSet.next()) {
                 String userName = resultSet.getString("name");
                 String userPassword = resultSet.getString("password");
-                user = new User(userName, userPassword);
+                user = new User();
+                user.setName(userName);
+                user.setPassword(userPassword);
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
@@ -92,16 +94,25 @@ public class UserSQL {
     }
 
     public static Boolean checkAuth(JSONObject headData) {
+
         String authorization = (String) headData.get("authorization");
-        String username = authorization.split("-")[0];
-        String token = authorization.split("-")[1];
-        if (!token.equals("mtcgToken")){
+        String username;
+        //Authorization: Basic kienboec-mtcgToken
+        try{
+            String basic = authorization.split(" ")[0];
+            username = authorization.split(" ")[1].split("-")[0];
+            String token = authorization.split("\\s")[1].split("-")[1];
+            if (!token.equals("mtcgToken") || !basic.equals("Basic") ){
+                return false;
+            }
+        }catch (Exception e){
             return false;
         }
         // get user
         String SQLQuery = "SELECT * from usertable WHERE name = ?";
         try{
             ResultSet rs = CRUD.ReadSql(SQLQuery, username);
+            assert rs != null;
             if (rs.next()) {
                 return true;
             }
@@ -123,7 +134,15 @@ public class UserSQL {
                 String userPassword = rs.getString("password");
                 String userBio = rs.getString("bio");
                 String userImage = rs.getString("image");
-                return new User(userId, userName, userPassword, userBio, userImage);
+                int coin = rs.getInt("coin");
+                User u = new User();
+                u.setId(userId);
+                u.setName(userName);
+                u.setPassword(userPassword);
+                u.setBio(userBio);
+                u.setImage(userImage);
+                u.setCoin(coin);
+                return u;
             }
         }catch (SQLException e){
             LOGGER.log(Level.SEVERE, e.getMessage(), e);

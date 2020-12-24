@@ -24,20 +24,16 @@ public class Card{
     // name
     private String name;
     private float damage;
-    private int id;
+    private String id;
+    private Package aPackage;
 
-    public Card (int id, String name, int damage, CardType cardType){
-        setId(id);
-        setName(name);
-        setCardType(cardType);
-        setDamage(damage);
-    }
+    public Card (){}
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
@@ -63,5 +59,13 @@ public class Card{
 
     public CardType getCardType() {
         return cardType;
+    }
+
+    public String toString(){
+        return  "{"
+                + "Id:\"" + id
+                + "\",\"Name\":\"" + name
+                + "\",\"Damage\":\"" + damage
+                + "\"}";
     }
 }

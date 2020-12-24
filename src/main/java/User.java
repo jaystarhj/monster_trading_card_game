@@ -5,25 +5,10 @@ public class User{
     private String password;
     private String bio;
     private String image;
+    private int coin;
 
     // constructor
-    public User(int id, String name, String password, String bio, String image){
-        setId(id);
-        setName(name);
-        setPassword(password);
-        setBio(bio);
-        setImage(image);
-    }
-    // constructor
-    public User(String name, String password){
-        setId(id);
-        setName(name);
-        setPassword(password);
-    }
-
-    public User() {
-
-    }
+    public User() {}
 
     // setter
     public void setName(String name) {
@@ -71,6 +56,14 @@ public class User{
         return image;
     }
 
+    public int getCoin() {
+        return coin;
+    }
+
+    public void setCoin(int coin) {
+        this.coin = coin;
+    }
+
     @Override
     public String toString(){
         if (bio == null){
@@ -85,6 +78,7 @@ public class User{
                 + "\",\"password\":\"" + password
                 + "\",\"bio\":\"" + bio
                 + "\",\"image\":\"" + image
+                + "\",\"coin\":\"" + coin
                 + "\"}";
     }
 

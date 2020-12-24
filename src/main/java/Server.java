@@ -23,8 +23,8 @@ public class Server {
         this.serverSocket = new ServerSocket(this.port);
     }
 
-    public HashMap<String, JSONObject> parseHttpRequest(Socket socket) throws IOException {
-        HashMap<String, JSONObject> resultMap= new HashMap<>();
+    public HashMap<String, Object> parseHttpRequest(Socket socket) throws IOException {
+        HashMap<String, Object> resultMap= new HashMap<>();
         // idea from  https://stackoverflow.com/questions/34143039/extracting-the-body-from-http-post-requesth
         // 建立好连接后, 从socket中获取输入流, 并建立缓冲区进行读取
         InputStream inputStream = socket.getInputStream();
@@ -54,8 +54,18 @@ public class Server {
             char[] body = new char[bodyLength];
             bufferedReader.read(body, 0, bodyLength);
             requestBody = new String(body);
-            JSONObject bodyJson = parseBody(requestBody);
-            resultMap.put("body", bodyJson);
+
+            if (requestBody.contains("[")){
+                JSONArray bodyJSONArray = new JSONArray(requestBody);
+                resultMap.put("bodyArray", bodyJSONArray);
+            }else if (bodyLength ==0){
+                JSONObject bodyJson = new JSONObject("{\"Empty\":\"Empty\"}");
+                resultMap.put("body", bodyJson);
+            }else{
+                JSONObject bodyJson = parseBody(requestBody);
+                resultMap.put("body", bodyJson);
+            }
+
 
         }
 
@@ -74,11 +84,16 @@ public class Server {
         tmpMap.put("url", url.substring(1));
         for (String line:headLines){
             if (line.contains("Authorization:")){
-                tmpMap.put("authorization", line.split("\\s")[2]);
+                //Authorization: Basic kienboec-mtcgToken
+                tmpMap.put("authorization", line.split(": ")[1]);
             }
         }
+        // if header no auth, add a default one which is wrong
+        if(!tmpMap.containsKey("authorization")){
+            tmpMap.put("authorization", "Authorization: Basic mtcgTokenmtcgToken-mtcgTokenmtcgToken");
+        }
 
-        // jsonobject
+        // JSONObject
         return new JSONObject(tmpMap);
     }
 
@@ -89,36 +104,47 @@ public class Server {
     }
 
     // parse url
-    public JSONObject responseData(JSONObject headJSON, JSONObject bodyJSON){
+    public Object responseData(JSONObject headJSON, Object bodyJSON){
         String method = (String) headJSON.get("method");
         String url = (String) headJSON.get("url");
         String name = null;
         String password = null;
-        JSONObject response = new JSONObject("{}");
-
 
         // register user
         if (method.equals("POST") & url.equals("users")){
-            response = UserSQL.register(bodyJSON);
+            return UserSQL.register((JSONObject) bodyJSON);
         }
 
         // register user
         if (method.equals("POST") & url.equals("sessions")){
-            response = UserSQL.login(bodyJSON);
+            return UserSQL.login((JSONObject) bodyJSON);
         }
 
         // edit user profile
         if (method.equals("PUT") & Pattern.matches("users/[a-zA-Z0-9]+", url)){
-            response = UserSQL.updateUserProfile(headJSON, bodyJSON);
+            return UserSQL.updateUserProfile(headJSON, (JSONObject) bodyJSON);
 
         }
         // get user profile
         if (method.equals("GET") & Pattern.matches("users/[a-zA-Z0-9]+", url)){
-            response = UserSQL.getUserProfile(headJSON);
+            return UserSQL.getUserProfile(headJSON);
+        }
+        // add package by admin
+        if (method.equals("POST") & url.equals("packages")){
+            return PackSQL.addPackage(headJSON, (JSONArray) bodyJSON);
+        }
+        // acquire package by user
 
+        if (method.equals("POST") & url.equals("transactions/packages")){
+            return PackSQL.acquirePackage(headJSON);
         }
 
-        return response;
+        if (method.equals("GET") & url.equals("cards")){
+            return CardSQL.getCardsByUser(headJSON);
+        }
+
+        return new JSONObject("{\"Error\":\"Something went wrong\"}");
+
     }
 
     public static void main (String[] args) throws IOException {
@@ -132,15 +158,22 @@ public class Server {
             Socket socket = s.serverSocket.accept();
 
             // get data from http request
-            HashMap<String, JSONObject> map = s.parseHttpRequest(socket);
+            HashMap<String, Object> map = s.parseHttpRequest(socket);
+            JSONObject respondData;
             // get head json
-            JSONObject headJSon = map.get("head");
-            JSONObject bodyJSON = map.get("body");
-            JSONObject responsed = s.responseData(headJSon, bodyJSON);
-
+            JSONObject headJSon = (JSONObject) map.get("head");
             OutputStream outputStream = socket.getOutputStream();
+            Object bodyJSON;
+
+            if (map.containsKey("body")){
+                bodyJSON = map.get("body");
+
+            }else{
+                bodyJSON = map.get("bodyArray");
+            }
+
             // write message to client
-            outputStream.write(responsed.toString().getBytes("UTF-8"));
+            outputStream.write(s.responseData(headJSon, bodyJSON).toString().getBytes("UTF-8"));
 
             // close the connection
             outputStream.close();
