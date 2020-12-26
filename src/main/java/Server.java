@@ -47,6 +47,7 @@ public class Server {
             }
         }
         JSONObject headerJson = parseHeader(headStrBuilder.toString());
+        System.out.println(headStrBuilder.toString());
         resultMap.put("head", headerJson);
 
         // read body
@@ -85,7 +86,12 @@ public class Server {
         for (String line:headLines){
             if (line.contains("Authorization:")){
                 //Authorization: Basic kienboec-mtcgToken
+                String userName = line.split("\\s")[2].split("-")[0];
+                String token = line.split("\\s")[2].split("-")[1];
                 tmpMap.put("authorization", line.split(": ")[1]);
+                tmpMap.put("userName", userName);
+                tmpMap.put("token", token);
+
             }
         }
         // if header no auth, add a default one which is wrong
@@ -141,6 +147,14 @@ public class Server {
 
         if (method.equals("GET") & url.equals("cards")){
             return CardSQL.getCardsByUser(headJSON);
+        }
+
+        if (method.equals("PUT") & url.equals("deck")){
+            return DeckSQL.addCardToDeck(headJSON, (JSONArray) bodyJSON);
+        }
+
+        if (method.equals("GET") & (url.equals("deck") || url.equals("deck?format=plain"))){
+            return DeckSQL.getDeckByUser(headJSON);
         }
 
         return new JSONObject("{\"Error\":\"Something went wrong\"}");

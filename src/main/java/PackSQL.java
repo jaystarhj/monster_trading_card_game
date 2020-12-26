@@ -13,7 +13,7 @@ public class PackSQL {
         JSONObject message = new JSONObject();
         String authStr = headJSON.getString("authorization");
         // first check if it is valid token and correct user: admin
-        if (!UserSQL.checkAuth(headJSON) || !authStr.equals("Basic admin-mtcgToken")){
+        if (!AuthSQL.checkAuth(headJSON) || !authStr.equals("Basic admin-mtcgToken")){
             message = new JSONObject("{\"Error\":\"Invalid Token\"}");
         }else{
             // add a new package
@@ -81,7 +81,7 @@ public class PackSQL {
         User user = UserSQL.getUserByName(userName);
         Package p = new Package();
         // 检查token
-        if (!UserSQL.checkAuth(headJSON) || user == null){
+        if (!AuthSQL.checkAuth(headJSON) || user == null){
             message = new JSONObject("{\"Error\":\"Invalid Token or User\"}");
         }else if (user.getCoin() == 0){ // 检查金钱是否足够
             message = new JSONObject("{\"Error\":\"No enough money\"}");

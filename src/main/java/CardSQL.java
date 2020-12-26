@@ -21,7 +21,7 @@ public class CardSQL {
         String PackQuery = "SELECT id from package Where user_id = ?";
 
         // first check if it is valid token and correct user: admin
-        if (!UserSQL.checkAuth(headJSON) || user == null){
+        if (!AuthSQL.checkAuth(headJSON) || user == null){
             message = new JSONObject("{\"Error\":\"Invalid Token\"}");
         }else{
             try{

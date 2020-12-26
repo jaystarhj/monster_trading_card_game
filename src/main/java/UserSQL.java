@@ -57,7 +57,7 @@ public class UserSQL {
     }
 
     public static JSONObject updateUserProfile(JSONObject headData, JSONObject bodyData){
-        Boolean auth = checkAuth(headData);
+        Boolean auth = AuthSQL.checkAuth(headData);
         String url = headData.getString("url");
         String name = url.split("/")[1];
         User user = getUserByName(name);
@@ -93,36 +93,6 @@ public class UserSQL {
         return message;
     }
 
-    public static Boolean checkAuth(JSONObject headData) {
-
-        String authorization = (String) headData.get("authorization");
-        String username;
-        //Authorization: Basic kienboec-mtcgToken
-        try{
-            String basic = authorization.split(" ")[0];
-            username = authorization.split(" ")[1].split("-")[0];
-            String token = authorization.split("\\s")[1].split("-")[1];
-            if (!token.equals("mtcgToken") || !basic.equals("Basic") ){
-                return false;
-            }
-        }catch (Exception e){
-            return false;
-        }
-        // get user
-        String SQLQuery = "SELECT * from usertable WHERE name = ?";
-        try{
-            ResultSet rs = CRUD.ReadSql(SQLQuery, username);
-            assert rs != null;
-            if (rs.next()) {
-                return true;
-            }
-        }catch (SQLException e){
-            LOGGER.log(Level.SEVERE, e.getMessage(), e);
-        }
-
-        return false;
-    }
-
     public static User getUserByName(String username) {
         // get user
         String SQLQuery = "SELECT * from usertable WHERE name = ?";
@@ -153,7 +123,7 @@ public class UserSQL {
 
     public static JSONObject getUserProfile(JSONObject headData){
         JSONObject message = null;
-        Boolean auth = checkAuth(headData);
+        Boolean auth = AuthSQL.checkAuth(headData);
         String url = headData.getString("url");
         String name = url.split("/")[1];
         User user = getUserByName(name);
