@@ -138,5 +138,36 @@ public class UserSQL {
 
     }
 
+    public static User getUserByID(int user_id){
+        String getCardQuery = "select * from usertable where id = ?";
+        try{
+            ResultSet rs = CRUD.ReadSql(getCardQuery, user_id);
+            if (rs.next() == false) {
+                return null;
+            } else
+            {
+                do {
+                    int id  = rs.getInt("id");
+                    String name  = rs.getString("name");
+                    String  bio  = rs.getString("bio");
+                    String  image  = rs.getString("image");
+                    int  coin  = rs.getInt("coin");
+                    User u = new User();
+                    u.setName(name);
+                    u.setId(id);
+                    u.setImage(image);
+                    u.setBio(bio);
+                    u.setCoin(coin);
+                    return u;
+                }
+                while (rs.next());
+            }
+        }catch (SQLException e){
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+        }
+
+        return null;
+    }
+
 } // end class
 

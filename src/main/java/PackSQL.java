@@ -100,7 +100,10 @@ public class PackSQL {
                     int remainCoin = chargeCoin(user);
                     // update package row
                     if (update(user.getId(), remainCoin, p_id)){
-                        message = new JSONObject("{\"message\":\"Acquired Package Successfully\"}");
+                        // add card to stack
+                        if (StackSQL.addCardToStack(headJSON)){
+                            message = new JSONObject("{\"message\":\"Acquired Package Successfully\"}");
+                        }
                     }
                 }else{
                     message = new JSONObject("{\"Error\":\"No package\"}");
@@ -109,6 +112,8 @@ public class PackSQL {
                 LOGGER.log(Level.SEVERE, e.getMessage(), e);
             }
         }
+
+
 
         return message;
     }

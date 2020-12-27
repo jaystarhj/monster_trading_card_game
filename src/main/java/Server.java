@@ -146,7 +146,7 @@ public class Server {
         }
 
         if (method.equals("GET") & url.equals("cards")){
-            return CardSQL.getCardsByUser(headJSON);
+            return CardSQL.getCardsFromPackByUser(headJSON);
         }
 
         if (method.equals("PUT") & url.equals("deck")){
@@ -156,7 +156,12 @@ public class Server {
         if (method.equals("GET") & (url.equals("deck") || url.equals("deck?format=plain"))){
             return DeckSQL.getDeckByUser(headJSON);
         }
-
+        if (method.equals("GET") & url.equals("stats")){
+            return StatsSQL.getStatsByUser(headJSON);
+        }
+        if (method.equals("GET") & url.equals("tradings")){
+            return TradeSQL.getDeals(headJSON);
+        }
         return new JSONObject("{\"Error\":\"Something went wrong\"}");
 
     }

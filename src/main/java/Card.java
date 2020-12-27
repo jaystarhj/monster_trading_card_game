@@ -10,10 +10,11 @@ public class Card{
         }
 
         public String toString(){
-            if (value == 1) {
-                return "SPELL";
+            switch(value){
+                case 0:   return "MONSTER";
+                case 1:   return "SPELL";
+                default:  return "NONE";
             }
-            return "MONSTER";
         }
     }
 
@@ -63,7 +64,7 @@ public class Card{
 
     public String toString(){
         return  "{"
-                + "Id:\"" + id
+                + "\"Id\":\"" + id
                 + "\",\"Name\":\"" + name
                 + "\",\"Damage\":\"" + damage
                 + "\"}";
