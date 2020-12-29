@@ -14,14 +14,13 @@ public class CardSQL {
     public static Object getCardsFromPackByUser(JSONObject headJSON){
         Object message;
         message  = new JSONObject("{\"Error\":\"Something went wrong\"}");
-        String userName = headJSON.getString("authorization").split("\\s")[1].split("-")[0];
-        User user = UserSQL.getUserByName(userName);
+        User user = UserSQL.getUserByName(headJSON.getString("userName"));
         List<String> pList = new ArrayList<>();
         List<String>  cList = new ArrayList<>();
         String PackQuery = "SELECT id from package Where user_id = ?";
 
         // first check if it is valid token and correct user: admin
-        if (!AuthSQL.checkAuth(headJSON) || user == null){
+        if (!util.checkToken(headJSON) || user == null){
             message = new JSONObject("{\"Error\":\"Invalid Token\"}");
         }else{
             try{
@@ -44,11 +43,12 @@ public class CardSQL {
                     String c_id = rs.getString("id");
                     String c_name = rs.getString("name");
                     float c_damage = rs.getFloat("damage");
+                    String type  = rs.getString("type");
                     Card c = new Card();
                     c.setDamage(c_damage);
                     c.setName(c_name);
                     c.setId(c_id);
-                    c.setCardType(Card.CardType.MONSTER);
+                    c.setCardType(type);
                     cList.add(c.toString());
                 }
                 message = new JSONArray(cList);
@@ -73,11 +73,12 @@ public class CardSQL {
                     String id  = rs.getString("id");
                     String name  = rs.getString("name");
                     Float damage  = rs.getFloat("damage");
+                    String type  = rs.getString("type");
                     Card c = new Card();
                     c.setName(name);
                     c.setId(id);
                     c.setDamage(damage);
-                    c.setCardType(Card.CardType.MONSTER);
+                    c.setCardType(type);
                     return c;
                 }
                 while (rs.next());

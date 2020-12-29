@@ -9,7 +9,7 @@ public class StatsSQL {
     private static final Logger LOGGER = Logger.getLogger(JdbcConnection.class.getName());
 
     public static JSONObject getStatsByUser(JSONObject headJSON){
-        Boolean authStatus = AuthSQL.checkAuth(headJSON);
+        Boolean authStatus = util.checkToken(headJSON);
         User user = UserSQL.getUserByName(headJSON.getString("userName"));
         JSONObject message = null;
         // if valid user and token

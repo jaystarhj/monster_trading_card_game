@@ -7,10 +7,10 @@ import java.util.logging.Logger;
 public class UserSQL {
     private static final Logger LOGGER = Logger.getLogger(JdbcConnection.class.getName());
 
-    // 注册用户
+    // for register user
     public static JSONObject register(JSONObject bodyJSON){
         String SQLQuery = "INSERT INTO usertable (name, password) values(?, ?)";
-        JSONObject message = new JSONObject("{\"Error\": \"invalid input or user name already exists\"}");
+        JSONObject message = new JSONObject("{\"Error\": \"invalid input/user name already exists\"}");
         String name = bodyJSON.getString("Username");
         String password = bodyJSON.getString("Password");
         int num = CRUD.CUDSql(SQLQuery, name, password);
@@ -20,6 +20,7 @@ public class UserSQL {
         return message;
     }
 
+    // handle user login
     public static JSONObject login(JSONObject bodyJSON) {
         String SQLQuery = "select * from usertable where name = ?";
         String name = bodyJSON.getString("Username");
@@ -56,8 +57,9 @@ public class UserSQL {
         return tmp;
     }
 
+    // for update user profile
     public static JSONObject updateUserProfile(JSONObject headData, JSONObject bodyData){
-        Boolean auth = AuthSQL.checkAuth(headData);
+        Boolean auth = util.checkToken(headData);
         String url = headData.getString("url");
         String name = url.split("/")[1];
         User user = getUserByName(name);
@@ -121,15 +123,13 @@ public class UserSQL {
         return null;
     }
 
-    public static JSONObject getUserProfile(JSONObject headData){
+    public static JSONObject getUserProfile(JSONObject headJSON){
         JSONObject message = null;
-        Boolean auth = AuthSQL.checkAuth(headData);
-        String url = headData.getString("url");
-        String name = url.split("/")[1];
-        User user = getUserByName(name);
-        if (user != null & auth){
-            System.out.println(user.toString());
-            message = new JSONObject(user.toString());
+        String userName = util.getUserNameFromHeadJSON(headJSON);
+        if (userName != null){
+            User user = UserSQL.getUserByName(userName);
+            if (user != null)
+                message = new JSONObject(user.toString());
         }else{
             message = new JSONObject("{\"Error\": \"Not such user / Invalid Token\"}");
         }

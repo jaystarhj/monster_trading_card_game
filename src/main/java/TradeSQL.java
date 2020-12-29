@@ -10,15 +10,16 @@ public class TradeSQL {
     private static final Logger LOGGER = Logger.getLogger(JdbcConnection.class.getName());
 
     public static JSONArray getDeals(JSONObject headData){
-        JSONObject message = new JSONObject("{\"Error\": \"Not such user / Invalid Token/User\"}");
-        JSONArray mJsonArray = new JSONArray();
-        if (AuthSQL.checkAuth(headData)){
+        JSONArray mJsonArray = new JSONArray(new JSONObject("{\"Error\": \"Not such user / Invalid Token/User\"}"));
+        User user = UserSQL.getUserByName(headData.getString("userName"));
+
+        if (util.checkToken(headData) & user != null){
             String getDealQuery = "select * from trade";
             try{
 
                 ResultSet rs = CRUD.ReadSql(getDealQuery);
                 if (rs.next() == false) {
-                    message = new JSONObject("{\"Message\": \"No data yet\"}");
+                    mJsonArray = new JSONArray(new JSONObject("{\"Message\": \"No data yet\"}"));
                 } else
                 {
                     do {
@@ -30,8 +31,7 @@ public class TradeSQL {
                         t.setCard(c);
                         t.setUser(u);
                         System.out.println(t.toString());
-                        message = new JSONObject(t.toString());
-                        mJsonArray.put(message);
+                        mJsonArray.put(new JSONObject(t.toString()));
                     }
                     while (rs.next());
                 }
@@ -44,18 +44,43 @@ public class TradeSQL {
 
     public static JSONObject addDeal(JSONObject headData, JSONObject bodyData){
         JSONObject message = new JSONObject("{\"Error\": \"Not such user / Invalid Token/User\"}");
-        if (AuthSQL.checkAuth(headData)){
-            String insertDeal = "insert into trade";
+        User user = UserSQL.getUserByName(headData.getString("userName"));
 
+        if (util.checkToken(headData) & user != null){
+            String insertDeal = "insert into trade (id, card_id, user_id) values (?, ?, ?)";
+            int id = bodyData.getInt("Id");
+            int c_id = bodyData.getInt("CardToTrade");
+            int user_id = user.getId();
+
+            int rowCount = CRUD.CUDSql(insertDeal, id,  c_id, user_id);
+            if (rowCount == 1){
+                message = new JSONObject("{\"Message\": \"Add deal Successfully\"}");
+            }else{
+                message = new JSONObject("{\"Error\": \"Invalid Data Input\"}");
+            }
         }
         return message;
     }
 
-    public static JSONObject deleteDeal(){
-        return null;
+    public static JSONObject deleteDeal(JSONObject headData, JSONObject bodyData){
+        JSONObject message = new JSONObject("{\"Error\": \"Not such user / Invalid Token/User\"}");
+        User user = UserSQL.getUserByName(headData.getString("userName"));
+
+        if (util.checkToken(headData) & user != null){
+            String insertDeal = "delete from trade where card_id = ?";
+            int card_id = 0;
+            int rowCount = CRUD.CUDSql(insertDeal, card_id, card_id);
+            if (rowCount == 1){
+                message = new JSONObject("{\"Message\": \"Delete deal Successfully\"}");
+            }else{
+                message = new JSONObject("{\"Error\": \"Invalid Data Input\"}");
+            }
+        }
+        return message;
     }
 
     public static JSONObject makeDeal(){
+
         return null;
     }
 

@@ -6,7 +6,7 @@ public class StackSQL {
     private static final Logger LOGGER = Logger.getLogger(JdbcConnection.class.getName());
 
     public static Boolean addCardToStack(JSONObject headJSON){
-        Boolean authStatus = AuthSQL.checkAuth(headJSON);
+        Boolean authStatus = util.checkToken(headJSON);
         User user = UserSQL.getUserByName(headJSON.getString("userName"));
         // if valid user and token
         if (authStatus & user != null){
@@ -18,22 +18,22 @@ public class StackSQL {
                     String card_id = item.getString("id");
                     String insertRowSQL = "insert into stack (card_id, user_id) values (?,?)";
                     int numCount = CRUD.CUDSql(insertRowSQL, card_id, user.getId());
-                    if (numCount != 1){
+                    System.out.println(numCount);
+                    if (numCount != 1) {
                         return false;
                     }
                 }
-                return true;
             }catch (ClassCastException e){
                 return false;
             }
         }
 
-        return false;
+        return true;
 
     }
 
     public static Boolean removeCardFromStack(JSONObject headJSON, String removed_card_id){
-        Boolean authStatus = AuthSQL.checkAuth(headJSON);
+        Boolean authStatus = util.checkToken(headJSON);
         User user = UserSQL.getUserByName(headJSON.getString("userName"));
         JSONArray message = new JSONArray();
         StringBuilder mStr = new StringBuilder();

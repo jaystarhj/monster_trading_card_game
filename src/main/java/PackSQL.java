@@ -13,19 +13,26 @@ public class PackSQL {
         JSONObject message = new JSONObject();
         String authStr = headJSON.getString("authorization");
         // first check if it is valid token and correct user: admin
-        if (!AuthSQL.checkAuth(headJSON) || !authStr.equals("Basic admin-mtcgToken")){
+        if (!util.checkToken(headJSON) || !authStr.equals("Basic admin-mtcgToken")){
             message = new JSONObject("{\"Error\":\"Invalid Token\"}");
         }else{
             // add a new package
             Package p = insertRowToPack();
-            String insertRow = "insert into card (id, name, damage, package_id) values (?, ?, ?, ?)";
+            String insertRow = "insert into card (id, name, damage, package_id, type) values (?, ?, ?, ?, ?)";
             for (Object js:bodyJSON){ // iterate jsonobject
                 // {\"Id\":\"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"Name\":\"WaterGoblin\", \"Damage\": 10.0}
                 JSONObject tmp = (JSONObject) js;
                 String c_id = tmp.getString("Id");
                 String c_name = tmp.getString("Name");
                 Float c_damage = tmp.getFloat("Damage");
-                int rowCount = CRUD.CUDSql(insertRow, c_id, c_name, c_damage, p.getId());
+                String c_type;
+                if (c_name.contains("Spell")){
+                    c_type = "monster";
+                }else{
+                    c_type = "spell";
+                }
+
+                int rowCount = CRUD.CUDSql(insertRow, c_id, c_name, c_damage, p.getId(), c_type);
                 if (rowCount == 1){
                     message = new JSONObject("{\"Message\":\"Package added successfully\"}");
                 }else{
@@ -60,28 +67,36 @@ public class PackSQL {
         return p;
     }
 
-    public static Boolean update(int user_id, int coin, int p_id){
-
+    public static Boolean updatePack(int user_id, int p_id){
         String SQLQuery = "update package set status = -1, user_id = ? where id = ?";
         int rowCount = CRUD.CUDSql(SQLQuery, user_id, p_id);
-
-        String updateUserCoin = "update usertable set coin = ? where id = ?";
-        int rowCount2 = CRUD.CUDSql(updateUserCoin, coin, user_id);
-
-        if (rowCount == 1 & rowCount2 ==1){
+        if (rowCount == 1){
             return true;
         }
         return false;
 
     }
+    public static Boolean updateCoin(int user_id, int coin){
+        String updateUserCoin = "update usertable set coin = ? where id = ?";
+        int rowCount2 = CRUD.CUDSql(updateUserCoin, coin, user_id);
 
-    public static JSONObject acquirePackage(JSONObject headJSON){
+        if (rowCount2 ==1){
+            return true;
+        }
+        return false;
+    }
+
+
+
+
+
+        public static JSONObject acquirePackage(JSONObject headJSON){
         JSONObject message  = new JSONObject("{\"Error\":\"Something went wrong\"}");
         String userName = headJSON.getString("authorization").split("\\s")[1].split("-")[0];
         User user = UserSQL.getUserByName(userName);
         Package p = new Package();
         // 检查token
-        if (!AuthSQL.checkAuth(headJSON) || user == null){
+        if (!util.checkToken(headJSON) || user == null){
             message = new JSONObject("{\"Error\":\"Invalid Token or User\"}");
         }else if (user.getCoin() == 0){ // 检查金钱是否足够
             message = new JSONObject("{\"Error\":\"No enough money\"}");
@@ -99,10 +114,12 @@ public class PackSQL {
                     p.setUser(user);
                     int remainCoin = chargeCoin(user);
                     // update package row
-                    if (update(user.getId(), remainCoin, p_id)){
-                        // add card to stack
-                        if (StackSQL.addCardToStack(headJSON)){
-                            message = new JSONObject("{\"message\":\"Acquired Package Successfully\"}");
+                    if (updatePack(user.getId(), p_id)){
+                        if (updateCoin(user.getId(), remainCoin)){
+                            // add card to stack
+                            if (StackSQL.addCardToStack(headJSON)){
+                                message = new JSONObject("{\"message\":\"Acquired Package Successfully\"}");
+                            }
                         }
                     }
                 }else{

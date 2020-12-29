@@ -1,33 +1,24 @@
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.*;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 
-public class Server {
-    // listen to port
-    private int port = 10001;
-    // server socket
-    private ServerSocket serverSocket;
-    // url path pattern
-    private List<String> pathList= Arrays.asList("users", "sessions",
-            "packages", "/transactions/packages",
-            "cards", "deck", "tradings", "score", "stats");
+public class ConnectionHandler extends Thread{
 
-    // constructor
-    public Server () throws IOException {
-        // init ServerSocket
-        this.serverSocket = new ServerSocket(this.port);
+    private Socket socket;
+
+    public ConnectionHandler (Socket socket){
+        this.socket = socket;
     }
 
-    public HashMap<String, Object> parseHttpRequest(Socket socket) throws IOException {
+    public HashMap<String, Object> parseHttpRequest() throws IOException {
         HashMap<String, Object> resultMap= new HashMap<>();
         // idea from  https://stackoverflow.com/questions/34143039/extracting-the-body-from-http-post-requesth
         // 建立好连接后, 从socket中获取输入流, 并建立缓冲区进行读取
-        InputStream inputStream = socket.getInputStream();
+        InputStream inputStream = this.socket.getInputStream();
 
         StringBuilder headStrBuilder = new StringBuilder();
         String line;
@@ -47,8 +38,8 @@ public class Server {
             }
         }
         JSONObject headerJson = parseHeader(headStrBuilder.toString());
-        System.out.println(headStrBuilder.toString());
         resultMap.put("head", headerJson);
+        System.out.println(headStrBuilder.toString());
 
         // read body
         if (hasBody){
@@ -74,7 +65,7 @@ public class Server {
     }
 
     // parse header
-    public JSONObject parseHeader(String headStr){
+    public static JSONObject parseHeader(String headStr){
         String[] headLines = headStr.split("\r\n");
         // loop through strings[]
         String[] firstLine = headLines[0].split(" ");
@@ -104,17 +95,15 @@ public class Server {
     }
 
     // parser body
-    public JSONObject parseBody(String bodyStr){
+    public static JSONObject parseBody(String bodyStr){
         // json object
         return new JSONObject(bodyStr);
     }
 
     // parse url
-    public Object responseData(JSONObject headJSON, Object bodyJSON){
+    public static Object responseData(JSONObject headJSON, Object bodyJSON){
         String method = (String) headJSON.get("method");
         String url = (String) headJSON.get("url");
-        String name = null;
-        String password = null;
 
         // register user
         if (method.equals("POST") & url.equals("users")){
@@ -156,50 +145,68 @@ public class Server {
         if (method.equals("GET") & (url.equals("deck") || url.equals("deck?format=plain"))){
             return DeckSQL.getDeckByUser(headJSON);
         }
+
         if (method.equals("GET") & url.equals("stats")){
             return StatsSQL.getStatsByUser(headJSON);
         }
+
         if (method.equals("GET") & url.equals("tradings")){
             return TradeSQL.getDeals(headJSON);
         }
+
+        if (method.equals("POST") & url.equals("battles")){
+            return null;
+        }
+
         return new JSONObject("{\"Error\":\"Something went wrong\"}");
 
     }
 
-    public static void main (String[] args) throws IOException {
-        // init the server
-        Server s = new Server();
-
-        // server 将一直等待连接的到来
-        System.out.println("waiting for connection now...");
-        while (true){
-
-            Socket socket = s.serverSocket.accept();
-
-            // get data from http request
-            HashMap<String, Object> map = s.parseHttpRequest(socket);
-            JSONObject respondData;
-            // get head json
-            JSONObject headJSon = (JSONObject) map.get("head");
-            OutputStream outputStream = socket.getOutputStream();
-            Object bodyJSON;
-
-            if (map.containsKey("body")){
-                bodyJSON = map.get("body");
-
-            }else{
-                bodyJSON = map.get("bodyArray");
-            }
-
-            // write message to client
-            outputStream.write(s.responseData(headJSon, bodyJSON).toString().getBytes("UTF-8"));
-
-            // close the connection
-            outputStream.close();
-            socket.close();
-
+    @Override
+    public void run() {
+        // get data from http request
+        HashMap<String, Object> map = null;
+        try {
+            map = parseHttpRequest();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-//        s.serverSocket.close();
+        JSONObject respondData;
+        // get head json
+        JSONObject headJSon = (JSONObject) map.get("head");
+        OutputStream outputStream = null;
+        try {
+            outputStream = socket.getOutputStream();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Object bodyJSON;
+
+        if (map.containsKey("body")){
+            bodyJSON = map.get("body");
+
+        }else{
+            bodyJSON = map.get("bodyArray");
+        }
+
+        // write message to client
+        try {
+            outputStream.write(responseData(headJSon, bodyJSON).toString().getBytes("UTF-8"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // close the connection
+        try {
+            outputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 

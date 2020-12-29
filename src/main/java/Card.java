@@ -11,9 +11,9 @@ public class Card{
 
         public String toString(){
             switch(value){
-                case 0:   return "MONSTER";
-                case 1:   return "SPELL";
-                default:  return "NONE";
+                case 0:   return "monster";
+                case 1:   return "spell";
+                default:  return "none";
             }
         }
     }
@@ -54,8 +54,11 @@ public class Card{
         return damage;
     }
 
-    public void setCardType(CardType cardType) {
-        this.cardType = cardType;
+    public void setCardType(String type) {
+        if (type.equals("monster")){
+            this.cardType = CardType.MONSTER;
+        }
+        this.cardType = CardType.SPELL;
     }
 
     public CardType getCardType() {
@@ -67,6 +70,7 @@ public class Card{
                 + "\"Id\":\"" + id
                 + "\",\"Name\":\"" + name
                 + "\",\"Damage\":\"" + damage
+                + "\",\"Type\":\"" + cardType
                 + "\"}";
     }
 }
