@@ -1,5 +1,10 @@
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class StackSQL {
@@ -11,16 +16,16 @@ public class StackSQL {
         // if valid user and token
         if (authStatus & user != null){
             try{
-                JSONArray cardList = (JSONArray) CardSQL.getCardsFromPackByUser(headJSON);
-                // iterate JSON Arrays
-                for (int i=0; i<cardList.length(); i++) {
-                    JSONObject item = cardList.getJSONObject(i);
-                    String card_id = item.getString("id");
-                    String insertRowSQL = "insert into stack (card_id, user_id) values (?,?)";
-                    int numCount = CRUD.CUDSql(insertRowSQL, card_id, user.getId());
-                    System.out.println(numCount);
-                    if (numCount != 1) {
-                        return false;
+                // get cards by user
+                List<Card> cardList = CardSQL.getCardsFromPackByUser(headJSON);
+                if (cardList != null){
+                    System.out.println(cardList);
+                    // iterate JSON Arrays
+                    for (int i=0; i<cardList.size(); i++) {
+                        Card item = cardList.get(i);
+                        String card_id = item.getId();
+                        String insertRowSQL = "insert into stack (card_id, user_id) values (?,?)  ON CONFLICT DO NOTHING";
+                        int numCount = CRUD.CUDSql(insertRowSQL, card_id, user.getId());
                     }
                 }
             }catch (ClassCastException e){
@@ -46,6 +51,35 @@ public class StackSQL {
             }
         }
         return false;
+    }
+
+    public static JSONArray getCardsFromStack(JSONObject headJSON){
+        Boolean authStatus = util.checkToken(headJSON);
+        JSONArray message = new JSONArray();
+
+        if (authStatus){
+            User user = UserSQL.getUserByName(headJSON.getString("userName"));
+
+            String insertRowSQL = "select * from stack where user_id = ?";
+            try{
+                ResultSet rs = CRUD.ReadSql(insertRowSQL, user.getId());
+                if (rs.next() == false){
+                    message = new JSONArray("[{\"Message\": \"No cards\"}]");
+                }else{
+                    do {
+                        String card_id = rs.getString("card_id");
+                        message.put(card_id);
+                    }
+                    while (rs.next());
+                }
+            }catch (SQLException e){
+                LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            }
+        }else {
+            message = new JSONArray("[{\"Error\": \"Invalid token / user\"}]");
+        }
+
+        return message;
     }
 
 }

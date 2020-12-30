@@ -57,8 +57,9 @@ public class Card{
     public void setCardType(String type) {
         if (type.equals("monster")){
             this.cardType = CardType.MONSTER;
+        }else{
+            this.cardType = CardType.SPELL;
         }
-        this.cardType = CardType.SPELL;
     }
 
     public CardType getCardType() {

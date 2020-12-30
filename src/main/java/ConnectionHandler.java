@@ -46,6 +46,7 @@ public class ConnectionHandler extends Thread{
             char[] body = new char[bodyLength];
             bufferedReader.read(body, 0, bodyLength);
             requestBody = new String(body);
+            System.out.println(requestBody);
 
             if (requestBody.contains("[")){
                 JSONArray bodyJSONArray = new JSONArray(requestBody);
@@ -53,9 +54,12 @@ public class ConnectionHandler extends Thread{
             }else if (bodyLength ==0){
                 JSONObject bodyJson = new JSONObject("{\"Empty\":\"Empty\"}");
                 resultMap.put("body", bodyJson);
-            }else{
+            }else if (requestBody.contains("{")){
                 JSONObject bodyJson = parseBody(requestBody);
                 resultMap.put("body", bodyJson);
+            }else{
+                JSONArray bodyJSONArray = new JSONArray("["+requestBody + "]");
+                resultMap.put("bodyArray", bodyJSONArray);
             }
 
 
@@ -106,17 +110,17 @@ public class ConnectionHandler extends Thread{
         String url = (String) headJSON.get("url");
 
         // register user
-        if (method.equals("POST") & url.equals("users")){
+        if (method.equals("POST") & url.equals("users") & bodyJSON instanceof JSONObject){
             return UserSQL.register((JSONObject) bodyJSON);
         }
 
         // register user
-        if (method.equals("POST") & url.equals("sessions")){
+        if (method.equals("POST") & url.equals("sessions") & bodyJSON instanceof JSONObject){
             return UserSQL.login((JSONObject) bodyJSON);
         }
 
         // edit user profile
-        if (method.equals("PUT") & Pattern.matches("users/[a-zA-Z0-9]+", url)){
+        if (method.equals("PUT") & Pattern.matches("users/[a-zA-Z0-9]+", url) & bodyJSON instanceof JSONObject) {
             return UserSQL.updateUserProfile(headJSON, (JSONObject) bodyJSON);
 
         }
@@ -125,7 +129,7 @@ public class ConnectionHandler extends Thread{
             return UserSQL.getUserProfile(headJSON);
         }
         // add package by admin
-        if (method.equals("POST") & url.equals("packages")){
+        if (method.equals("POST") & url.equals("packages") & bodyJSON instanceof JSONArray){
             return PackSQL.addPackage(headJSON, (JSONArray) bodyJSON);
         }
         // acquire package by user
@@ -135,10 +139,10 @@ public class ConnectionHandler extends Thread{
         }
 
         if (method.equals("GET") & url.equals("cards")){
-            return CardSQL.getCardsFromPackByUser(headJSON);
+            return StackSQL.getCardsFromStack(headJSON);
         }
 
-        if (method.equals("PUT") & url.equals("deck")){
+        if (method.equals("PUT") & url.equals("deck") & bodyJSON instanceof JSONArray){
             return DeckSQL.addCardToDeck(headJSON, (JSONArray) bodyJSON);
         }
 
@@ -151,14 +155,25 @@ public class ConnectionHandler extends Thread{
         }
 
         if (method.equals("GET") & url.equals("tradings")){
-            return TradeSQL.getDeals(headJSON);
+            return StoreSQL.getDeals(headJSON);
+        }
+
+        if (method.equals("POST") & url.equals("tradings") & bodyJSON instanceof JSONObject){
+            return StoreSQL.addDeal(headJSON, (JSONObject) bodyJSON);
+        }
+        if (method.equals("POST") & Pattern.matches("tradings/[a-zA-Z0-9-]+", url)  & bodyJSON instanceof JSONArray){
+            return StoreSQL.makeDeal(headJSON, (JSONArray) bodyJSON);
+        }
+        if (method.equals("DELETE") & Pattern.matches("tradings/[a-zA-Z0-9-]+", url)){
+            return StoreSQL.deleteDeal(headJSON);
         }
 
         if (method.equals("POST") & url.equals("battles")){
             return null;
         }
 
-        return new JSONObject("{\"Error\":\"Something went wrong\"}");
+
+        return new JSONObject("{\"Error\":\"Invalid HTTP method or URL or input data\"}");
 
     }
 

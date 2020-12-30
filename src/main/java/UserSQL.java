@@ -125,10 +125,12 @@ public class UserSQL {
 
     public static JSONObject getUserProfile(JSONObject headJSON){
         JSONObject message = null;
-        String userName = util.getUserNameFromHeadJSON(headJSON);
-        if (userName != null){
-            User user = UserSQL.getUserByName(userName);
-            if (user != null)
+        String url = headJSON.getString("url");
+        String name = url.split("/")[1];
+        User user = getUserByName(name);
+        String tokenUserName = util.getUserNameFromHeadJSON(headJSON);
+        if (user != null){
+            if (tokenUserName != null)
                 message = new JSONObject(user.toString());
         }else{
             message = new JSONObject("{\"Error\": \"Not such user / Invalid Token\"}");

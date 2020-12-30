@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS package(
 
 -- create card table
 -- 添加外键约束时，首先删除已经存在的外键约束
-ALTER TABLE card
-    DROP CONSTRAINT card_package_id_fkey;
+-- ALTER TABLE card
+-- DROP CONSTRAINT card_package_id_fkey;
 DROP TABLE IF exists card cascade;
 CREATE TABLE IF NOT EXISTS card(
                                    id varchar (50) PRIMARY KEY,
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS userTable
 DROP TABLE IF exists deck cascade;
 CREATE TABLE IF NOT EXISTS deck(
                                    id serial PRIMARY KEY,
-                                   card_id varchar (50) unique not null references card(id) ON DELETE CASCADE,
+                                   card_id varchar (50) unique not null references stack(card_id),
                                    user_id int4);
 
 
@@ -44,16 +44,19 @@ CREATE TABLE IF NOT EXISTS stats(
                                     win int4,
                                     loss int4,
                                     Elo int4 not null default 100,
-                                    user_id int4 not null unique references usertable (id) on delete cascade);
+                                    user_id int4 not null unique references usertable (id));
 
-DROP TABLE IF exists trade cascade;
-CREATE TABLE IF NOT EXISTS trade(
+DROP TABLE IF exists store cascade;
+CREATE TABLE IF NOT EXISTS store(
                                     id varchar (50) PRIMARY KEY,
-                                    card_id varchar unique not null references card (id) on delete cascade,
-                                    user_id int4 references usertable (id) on delete cascade);
+                                    card_id varchar unique not null references stack (card_id),
+                                    user_id int4 references usertable (id),
+                                    require_type varchar (50),
+                                    minimum_damage float4,
+                                    status varchar(50) default 'active');
 
 DROP TABLE IF exists stack cascade;
 CREATE TABLE IF NOT EXISTS stack(
                                     id serial PRIMARY KEY,
-                                    card_id varchar unique not null references card (id) on delete cascade,
-                                    user_id int4 references usertable (id) on delete cascade);
+                                    card_id varchar unique not null references card (id),
+                                    user_id int4 references usertable (id));

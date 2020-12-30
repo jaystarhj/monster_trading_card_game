@@ -1,5 +1,5 @@
 
-public class Trade {
+public class Store {
 
     private Card card;
     private User user;

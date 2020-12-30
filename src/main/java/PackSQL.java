@@ -27,9 +27,9 @@ public class PackSQL {
                 Float c_damage = tmp.getFloat("Damage");
                 String c_type;
                 if (c_name.contains("Spell")){
-                    c_type = "monster";
-                }else{
                     c_type = "spell";
+                }else{
+                    c_type = "monster";
                 }
 
                 int rowCount = CRUD.CUDSql(insertRow, c_id, c_name, c_damage, p.getId(), c_type);
@@ -86,11 +86,7 @@ public class PackSQL {
         return false;
     }
 
-
-
-
-
-        public static JSONObject acquirePackage(JSONObject headJSON){
+    public static JSONObject acquirePackage(JSONObject headJSON){
         JSONObject message  = new JSONObject("{\"Error\":\"Something went wrong\"}");
         String userName = headJSON.getString("authorization").split("\\s")[1].split("-")[0];
         User user = UserSQL.getUserByName(userName);
