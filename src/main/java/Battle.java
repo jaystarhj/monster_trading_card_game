@@ -134,7 +134,7 @@ public class Battle {
                     card_List.add(card);
                 }
             }
-            int randomInt = randomNumber();
+            int randomInt = randomNumber(0, card_List.size()-1);
             card = card_List.get(randomInt);
         }
 
