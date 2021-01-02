@@ -15,6 +15,8 @@ public class UserSQL {
         String password = bodyJSON.getString("Password");
         int num = CRUD.CUDSql(SQLQuery, name, password);
         if (num == 1){
+            User user = getUserByName(name);
+            CRUD.CUDSql("insert into stats (user_id) values (?)",user.getId()); // insert stats
             message = new JSONObject("{\"message\": \"Successfully Added\"}");
         }
         return message;
@@ -107,6 +109,7 @@ public class UserSQL {
                 String userBio = rs.getString("bio");
                 String userImage = rs.getString("image");
                 int coin = rs.getInt("coin");
+                boolean battle_status = rs.getBoolean("battle_status");
                 User u = new User();
                 u.setId(userId);
                 u.setName(userName);
@@ -114,6 +117,7 @@ public class UserSQL {
                 u.setBio(userBio);
                 u.setImage(userImage);
                 u.setCoin(coin);
+                u.setBattle_status(battle_status);
                 return u;
             }
         }catch (SQLException e){
@@ -154,12 +158,14 @@ public class UserSQL {
                     String  bio  = rs.getString("bio");
                     String  image  = rs.getString("image");
                     int  coin  = rs.getInt("coin");
+                    boolean battle_status = rs.getBoolean("battle_status");
                     User u = new User();
                     u.setName(name);
                     u.setId(id);
                     u.setImage(image);
                     u.setBio(bio);
                     u.setCoin(coin);
+                    u.setBattle_status(battle_status);
                     return u;
                 }
                 while (rs.next());

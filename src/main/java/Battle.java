@@ -4,7 +4,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ServiceLoader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,32 +19,52 @@ public class Battle {
             String userName = util.getUserNameFromHeadJSON(headJSON);
             User user = UserSQL.getUserByName(userName);
             if (user != null){
-                User user_two = getRandomUser(user.getName());
-                System.out.println(" user one is: " + user.getName() );
-                System.out.println(" user two is: " + user_two.getName() );
+                if (!user.getBattle_status()){
+                    User user_two = getRandomUser(user.getName());
+                    if (user_two != null){
+                        // update battle status
+                        updateUserBattleStatus(userName);
+                        updateUserBattleStatus(user_two.getName());
 
-                while (true){ // 循环
-                    // 如果轮数达到了100,或者任意一方deck没有卡牌了
-                    if (count == 100 || checkEmptyDeckByUser(user.getId(), user_two.getId())){
-                        // 统计分数
+                        System.out.println(" user one is: " + user.getName() );
+                        System.out.println(" user two is: " + user_two.getName() );
 
-                        // 终止游戏
-                        break;
-                    }
+                        while (true){ // 循环
+                            // 如果轮数达到了100,或者任意一方deck没有卡牌了
+                            if (count == 101 || checkEmptyDeckByUser(user.getId(), user_two.getId())){
+                                // 终止游戏
+                                break;
+                            }
 
-                    // 开始一轮游戏,随机选择两张卡牌进行PK,
-                    winner = oneRound(user.getId(), user_two.getId());
-                    if (winner == user.getId()){
-                        System.out.println("round " + count + "  winner is : " + user.getName());
-                    }else if (winner == user_two.getId()){
-                        System.out.println("round " + count + "  winner is : " + user_two.getName());
+                            // 开始一轮游戏,随机选择两张卡牌进行PK,
+                            winner = oneRound(user.getId(), user_two.getId());
+                            if (winner == user.getId()){
+                                System.out.println("round " + count + "  winner is : " + user.getName());
+                                updateStatus(user.getId(), 1, 0,0);
+                                updateStatus(user_two.getId(), 0, 1,0);
+                            }else if (winner == user_two.getId()){
+                                System.out.println("round " + count + "  winner is : " + user_two.getName());
+                                updateStatus(user_two.getId(), 1, 0,0);
+                                updateStatus(user.getId(), 0, 1, 0);
+                            }else{
+                                System.out.println("round " + count + " is : " + "draw");
+                                updateStatus(user_two.getId(), 0, 0,1);
+                                updateStatus(user.getId(), 0, 0, 1);
+                            }
+                            count += 1;
+                        }
+
+                        // update battle status
+                        updateUserBattleStatus(userName);
+                        updateUserBattleStatus(user_two.getName());
+
+                        message = new JSONObject("{\"Message\":\"Battle is completed\"}");
                     }else{
-                        System.out.println("round " + count + " is : " + "draw");
+                        message = new JSONObject("{\"Error\":\"There is no user available for battle now\"}");
                     }
-                    count += 1;
+                }else{
+                    message = new JSONObject("{\"Error\":\"You already in a battle now\"}");
                 }
-
-                // update status
             }
         }else{
             message = new JSONObject("{\"Error\":\"invalid token or user\"}");
@@ -122,9 +141,6 @@ public class Battle {
 
     }
 
-    public int getScore(){
-        return 0;
-    }
 
     // randomly pick card from deck by user_id
     public static int randomNumber(int min, int max){
@@ -133,13 +149,13 @@ public class Battle {
         return randomInt;
     }
 
-    public static List<String> getCardIdFromStack(int user_id){
+    public static List<String> getCardIdFromDeck(int user_id){
         String SQLQuery = "select * from deck where user_id = ?";
         List<String> idList = new ArrayList<>();
         try{
             ResultSet rs = CRUD.ReadSql(SQLQuery, user_id);
             if (rs.next() == false){
-                return null;
+                return idList;
             }else{
                 do {
                     String card_id = rs.getString("card_id");
@@ -156,9 +172,9 @@ public class Battle {
 
     public static Card getRandomCard(int user_id){
         Card card = null;
-        List<String> cardIdList = getCardIdFromStack(user_id);
-        List<Card> card_List = new ArrayList<>();
-        if (cardIdList != null ){
+        List<String> cardIdList = getCardIdFromDeck(user_id);
+        if (!cardIdList.isEmpty()){
+            List<Card> card_List = new ArrayList<>();
             for (String card_id:cardIdList){
                 card = CardSQL.getCardByID(card_id);
                 if (card != null){
@@ -261,7 +277,7 @@ public class Battle {
         User user = null;
         List<User>  userList = new ArrayList<>();
 
-        String sqlQuery = "SELECT * FROM usertable WHERE name NOT IN ('admin', ?)";
+        String sqlQuery = "SELECT * FROM usertable WHERE name NOT IN ('admin', ?) and (userTable.battle_status = false)";
         try{
             ResultSet rs = CRUD.ReadSql(sqlQuery, userName);
             if (rs.next() == false){
@@ -274,6 +290,7 @@ public class Battle {
                     tmpUser.setBio(rs.getString("bio"));
                     tmpUser.setImage(rs.getString("image"));
                     tmpUser.setCoin(rs.getInt("coin"));
+                    tmpUser.setBattle_status(rs.getBoolean("battle_status"));
                     userList.add(tmpUser);
                 }while (rs.next());
 
@@ -303,7 +320,15 @@ public class Battle {
         return false;
     }
 
+    public static void updateStatus(int user_id, int win, int loss, int draw){
+        // check if user in stats table
+        String updateStats = "update stats set win = win + ?, loss = loss + ?, draw = draw +? where user_id = ?";
+        CRUD.CUDSql(updateStats, win, loss, draw, user_id);
+    }
 
+    public static  void updateUserBattleStatus(String userName){
+        CRUD.CUDSql("update usertable set battle_status = not userTable.battle_status where name = ?", userName);
+    }
 
     public static void main(String[] args){
         System.out.println(getRandomCard(1));

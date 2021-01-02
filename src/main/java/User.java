@@ -6,6 +6,8 @@ public class User{
     private String bio;
     private String image;
     private int coin;
+    private boolean battle_status;
+
 
     // constructor
     public User() {}
@@ -62,6 +64,14 @@ public class User{
 
     public void setCoin(int coin) {
         this.coin = coin;
+    }
+
+    public void setBattle_status(boolean battle_status) {
+        this.battle_status = battle_status;
+    }
+
+    public boolean getBattle_status() {
+        return battle_status;
     }
 
     @Override
