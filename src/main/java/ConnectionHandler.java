@@ -105,7 +105,7 @@ public class ConnectionHandler extends Thread{
     }
 
     // parse url
-    public static Object responseData(JSONObject headJSON, Object bodyJSON){
+    public static Object responseData(JSONObject headJSON, Object bodyJSON) throws FileNotFoundException {
         String method = (String) headJSON.get("method");
         String url = (String) headJSON.get("url");
 

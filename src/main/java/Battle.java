@@ -1,16 +1,19 @@
 import org.json.JSONObject;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Battle {
     private static final Logger LOGGER = Logger.getLogger(JdbcConnection.class.getName());
 
-    public static JSONObject runBattle(JSONObject headJSON){
+    public static JSONObject runBattle(JSONObject headJSON) throws FileNotFoundException {
         JSONObject message = new JSONObject();
         int count = 1;
         int winner = -1;
@@ -21,13 +24,21 @@ public class Battle {
             if (user != null){
                 if (!user.getBattle_status()){
                     User user_two = getRandomUser(user.getName());
+
+                    // log into file
+                    UUID uuid = UUID.randomUUID();
+                    PrintStream fileStream = new PrintStream("battle_" + uuid + ".txt");
+                    System.setOut(fileStream);
+
+
+                    // start
                     if (user_two != null){
                         // update battle status
                         updateUserBattleStatus(userName);
                         updateUserBattleStatus(user_two.getName());
 
-                        System.out.println(" user one is: " + user.getName() );
-                        System.out.println(" user two is: " + user_two.getName() );
+                        System.out.println("user one is: " + user.getName() );
+                        System.out.println("user two is: " + user_two.getName() );
 
                         while (true){ // 循环
                             // 如果轮数达到了100,或者任意一方deck没有卡牌了
@@ -38,6 +49,7 @@ public class Battle {
 
                             // 开始一轮游戏,随机选择两张卡牌进行PK,
                             winner = oneRound(user.getId(), user_two.getId());
+
                             if (winner == user.getId()){
                                 System.out.println("round " + count + "  winner is : " + user.getName());
                                 updateStatus(user.getId(), 1, 0,0);
@@ -80,8 +92,7 @@ public class Battle {
         String card_ID;
         Card cardOne = getRandomCard(user_id_one);
         Card cardTwo = getRandomCard(user_id_two);
-        System.out.println("card_one: " + cardOne.getId());
-        System.out.println("card_two: " + cardTwo.getId());
+
 
         // pk两张牌
         String cardOneType = cardOne.getCardType().toString();
@@ -109,6 +120,10 @@ public class Battle {
             cardTwoDamageNew = map.get("card_two");
         }
 
+        System.out.println("card_one: " + cardOne.toString());
+        System.out.println("card_one_damage: " + cardOne.getDamage() + " card_one_damage_transform: " + cardOneDamageNew);
+        System.out.println("card_two: " + cardTwo.toString());
+        System.out.println("card_two_damage: " + cardOne.getDamage() + " card_two_damage_transform: " + cardTwoDamageNew);
 
         // 比较牌的大小
         if (cardOneDamageNew > cardTwoDamageNew){
