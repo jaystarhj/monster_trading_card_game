@@ -1,8 +1,8 @@
 public class Stats {
     private int user_id;
-    private int Elo;
     private int win;
     private int loss;
+    private int draw;
 
     public Stats (){}
 
@@ -10,9 +10,6 @@ public class Stats {
         this.user_id = user_id;
     }
 
-    public void setElo(int elo) {
-        Elo = elo;
-    }
 
     public void setLoss(int loss) {
         this.loss = loss;
@@ -26,10 +23,6 @@ public class Stats {
         return user_id;
     }
 
-    public int getElo() {
-        return Elo;
-    }
-
     public int getLoss() {
         return loss;
     }
@@ -38,11 +31,22 @@ public class Stats {
         return win;
     }
 
+    public int getELOScore(){
+        return 100 + 3*win -5*loss;
+    }
+
+    public int getDraw() {
+        return draw;
+    }
+
+    public void setDraw(int draw) {
+        this.draw = draw;
+    }
+
     @Override
     public String toString() {
         return "{" +
                 "\"user_id\":\"" + user_id + "\"" +
-                ", \"Elo\":\"" + Elo + "\"" +
                 ", \"win\":\"" + win + "\"" +
                 ", \"loss\":\"" + loss + "\"" +
                 '}';

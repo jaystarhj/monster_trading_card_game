@@ -172,6 +172,10 @@ public class ConnectionHandler extends Thread{
             return Battle.runBattle(headJSON);
         }
 
+        if (method.equals("GET") & url.equals("score")){
+            return StatsSQL.scoreBoard(headJSON);
+        }
+
 
         return new JSONObject("{\"Error\":\"Invalid HTTP method or URL or input data\"}");
 
