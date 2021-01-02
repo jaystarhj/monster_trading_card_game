@@ -169,7 +169,8 @@ public class ConnectionHandler extends Thread{
         }
 
         if (method.equals("POST") & url.equals("battles")){
-            return null;
+            Battle.runBattle(headJSON);
+            return new JSONObject("{}");
         }
 
 

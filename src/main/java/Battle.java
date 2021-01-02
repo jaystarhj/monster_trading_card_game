@@ -1,12 +1,10 @@
-import org.json.JSONArray;
 import org.json.JSONObject;
-
-import java.nio.charset.IllegalCharsetNameException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ServiceLoader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -15,7 +13,7 @@ public class Battle {
 
     public static JSONObject runBattle(JSONObject headJSON){
         JSONObject message = new JSONObject();
-        int count = 100;
+        int count = 1;
         int winner = -1;
 
         if (util.checkToken(headJSON)){
@@ -23,21 +21,28 @@ public class Battle {
             User user = UserSQL.getUserByName(userName);
             if (user != null){
                 User user_two = getRandomUser(user.getName());
-                while (true){
-                    if (count == 0){
+                System.out.println(" user one is: " + user.getName() );
+                System.out.println(" user two is: " + user_two.getName() );
+
+                while (true){ // 循环
+                    // 如果轮数达到了100,或者任意一方deck没有卡牌了
+                    if (count == 100 || checkEmptyDeckByUser(user.getId(), user_two.getId())){
+                        // 统计分数
+
+                        // 终止游戏
                         break;
                     }
+
+                    // 开始一轮游戏,随机选择两张卡牌进行PK,
                     winner = oneRound(user.getId(), user_two.getId());
                     if (winner == user.getId()){
-
+                        System.out.println("round " + count + "  winner is : " + user.getName());
                     }else if (winner == user_two.getId()){
-
+                        System.out.println("round " + count + "  winner is : " + user_two.getName());
                     }else{
-
+                        System.out.println("round " + count + " is : " + "draw");
                     }
-
-
-                    count -= 1;
+                    count += 1;
                 }
 
                 // update status
@@ -51,10 +56,15 @@ public class Battle {
     }
 
     public static int oneRound(int user_id_one, int user_id_two){
+        // 每个player随机从deck选出一张卡牌
         int winner;
+        String card_ID;
         Card cardOne = getRandomCard(user_id_one);
         Card cardTwo = getRandomCard(user_id_two);
+        System.out.println("card_one: " + cardOne.getId());
+        System.out.println("card_two: " + cardTwo.getId());
 
+        // pk两张牌
         String cardOneType = cardOne.getCardType().toString();
         String cardTwoType = cardTwo.getCardType().toString();
 
@@ -80,15 +90,36 @@ public class Battle {
             cardTwoDamageNew = map.get("card_two");
         }
 
+
+        // 比较牌的大小
         if (cardOneDamageNew > cardTwoDamageNew){
             winner = user_id_one;
+            card_ID = cardTwo.getId();
         }else if (cardOneDamageNew < cardTwoDamageNew){
-            winner = user_id_one;
+            winner = user_id_two;
+            card_ID = cardOne.getId();
         }else{
             winner = -1;
+            card_ID = null;
+
         }
 
+        // 把卡牌从输的一方换到赢的一方
+        updateDeck(winner, card_ID);
+
         return winner;
+    }
+
+    public static void updateDeck(int user_id_winner, String card_id_loser){
+        if (user_id_winner != -1 & card_id_loser != null){
+            // up deck
+            String updateDeckQuery = "UPDATE deck SET user_id = ? WHERE card_id = ?";
+            String updateStackQuery = "UPDATE stack SET user_id = ? WHERE card_id = ?";
+
+            int rowCount = CRUD.CUDSql(updateDeckQuery, user_id_winner, card_id_loser);
+            int rowCountTwo = CRUD.CUDSql(updateStackQuery, user_id_winner, card_id_loser);
+        }
+
     }
 
     public int getScore(){
@@ -253,6 +284,26 @@ public class Battle {
         }
         return user;
     }
+
+    public static Boolean checkEmptyDeckByUser(int user_id_one, int user_id_two){
+        String checkDeck = "select * from deck where user_id = ?";
+        try{
+            ResultSet rs = CRUD.ReadSql(checkDeck, user_id_one);
+            if (rs.next() == false){
+                return true;
+            }
+            ResultSet rs_two = CRUD.ReadSql(checkDeck, user_id_two);
+            if (rs_two.next() == false){
+                return true;
+            }
+        }catch (SQLException e){
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+        }
+
+        return false;
+    }
+
+
 
     public static void main(String[] args){
         System.out.println(getRandomCard(1));
