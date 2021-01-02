@@ -242,12 +242,12 @@ public class Battle {
             map.put("card_one", havledDamage(cardOne));
             map.put("card_two", doubleDamage(cardTwo));
             // knight vs water
-        }else if (cardOneName.contains("Knight") & cardTwoName.contains("WaterSpell") ){
-            map.put("card_one", havledDamage(cardOne));
+        }else if (cardOneName.contains("Knight") & cardTwoName.contains("Water") ){
             map.put("card_two", doubleDamage(cardTwo));
-        }else if (cardOneName.contains("WaterSpell") & cardTwoName.contains("Knight") ){
+            map.put("card_one", (float) 0.0);
+        }else if (cardOneName.contains("Water") & cardTwoName.contains("Knight") ){
             map.put("card_one", doubleDamage(cardOne));
-            map.put("card_two", havledDamage(cardTwo));
+            map.put("card_two", (float) 0.0);
         }else if (cardOneName.contains("Dragons") & cardTwoName.contains("Goblins") ){
             map.put("card_one", doubleDamage(cardOne));
             map.put("card_two", (float) 0.0);
