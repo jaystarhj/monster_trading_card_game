@@ -13,15 +13,15 @@ class JdbcConnection {
         // 参数：
         // jdbc协议:postgresql子协议://主机地址:数据库端口号/要连接的数据库名
         String url = "jdbc:postgresql://localhost:5432/MTCG-test";
-        // 数据库用户名
+        // 数据库用户名Databank username
         String user = "postgres";
-        // 数据库密码
+        // 数据库密码password
         String password = "123";
 
-        // 1.加载驱动
+        // 1.加载驱动drive
         Class.forName("org.postgresql.Driver");
 
-        // 2. 连接数据库，返回连接对象
+        // 2. 连接数据库，返回连接对象connect to databank,return the connected object
         Connection conn = null;
         try {
             conn = DriverManager.getConnection(url, user, password);
