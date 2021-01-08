@@ -9,7 +9,7 @@ public class Main {
         ServerSocket s = new ServerSocket(10001);
         System.out.println("Waiting for new connection...");
 
-        // server 将一直等待连接的到来
+        // server will keep waiting 
         while (true){
             Socket socket = null;
             try{
