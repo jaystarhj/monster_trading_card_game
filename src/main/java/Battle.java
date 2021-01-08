@@ -41,13 +41,13 @@ public class Battle {
                         System.out.println("user two is: " + user_two.getName() );
 
                         while (true){ // 循环
-                            // 如果轮数达到了100,或者任意一方deck没有卡牌了
+                            // 如果轮数达到了100,或者任意一方deck没有卡牌了 if rounds=100 or anyone has no more cards
                             if (count == 101 || checkEmptyDeckByUser(user.getId(), user_two.getId())){
                                 // 终止游戏
                                 break;
                             }
 
-                            // 开始一轮游戏,随机选择两张卡牌进行PK,
+                            // 开始一轮游戏,随机选择两张卡牌进行PK,start one round game,randomly pick 2 cards
                             winner = oneRound(user.getId(), user_two.getId());
 
                             if (winner == user.getId()){
@@ -87,14 +87,14 @@ public class Battle {
     }
 
     public static int oneRound(int user_id_one, int user_id_two){
-        // 每个player随机从deck选出一张卡牌
+        // 每个player随机从deck选出一张卡牌 2 players choose 1 card from deck randomly
         int winner;
         String card_ID;
         Card cardOne = getRandomCard(user_id_one);
         Card cardTwo = getRandomCard(user_id_two);
 
 
-        // pk两张牌
+        // pk两张牌 start the fight
         String cardOneType = cardOne.getCardType().toString();
         String cardTwoType = cardTwo.getCardType().toString();
 
@@ -125,7 +125,7 @@ public class Battle {
         System.out.println("card_two: " + cardTwo.toString());
         System.out.println("card_two_damage: " + cardOne.getDamage() + " card_two_damage_transform: " + cardTwoDamageNew);
 
-        // 比较牌的大小
+        // 比较牌的大小 compare the card
         if (cardOneDamageNew > cardTwoDamageNew){
             winner = user_id_one;
             card_ID = cardTwo.getId();
@@ -138,7 +138,7 @@ public class Battle {
 
         }
 
-        // 把卡牌从输的一方换到赢的一方
+        // 把卡牌从输的一方换到赢的一方 give the card to winner
         updateDeck(winner, card_ID);
 
         return winner;
