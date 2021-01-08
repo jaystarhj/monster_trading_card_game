@@ -91,10 +91,10 @@ public class PackSQL {
         String userName = headJSON.getString("authorization").split("\\s")[1].split("-")[0];
         User user = UserSQL.getUserByName(userName);
         Package p = new Package();
-        // 检查token
+        // check token
         if (!util.checkToken(headJSON) || user == null){
             message = new JSONObject("{\"Error\":\"Invalid Token or User\"}");
-        }else if (user.getCoin() == 0){ // 检查金钱是否足够
+        }else if (user.getCoin() == 0){ // check if enough money
             message = new JSONObject("{\"Error\":\"No enough money\"}");
         }else{
             // return null or return the last row of package id if there is still package
