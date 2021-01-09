@@ -212,11 +212,11 @@ public class Battle {
                 cardOneName.equals("FireSpell") & cardTwoName.equals("RegularSpell") ||
                 cardOneName.equals("RegularSpell") & cardTwoName.equals("WaterSpell")){
             map.put("card_one", doubleDamage(cardOne));
-            map.put("card_two", havledDamage(cardTwo));
+            map.put("card_two", halvedDamage(cardTwo));
         }else if (cardOneName.equals("FireSpell") & cardTwoName.equals("WaterSpell") ||
                 cardOneName.equals("RegularSpell") & cardTwoName.equals("FireSpell") ||
                 cardOneName.equals("WaterSpell") & cardTwoName.equals("RegularSpell")){
-            map.put("card_one", havledDamage(cardOne));
+            map.put("card_one", halvedDamage(cardOne));
             map.put("card_two", doubleDamage(cardTwo));
         }else{
             map.put("card_one", cardOne.getDamage());
@@ -235,11 +235,11 @@ public class Battle {
                 cardOneName.contains("Fire") & cardTwoName.contains("Regular") ||
                 cardOneName.contains("Regular") & cardTwoName.contains("Water")){
             map.put("card_one", doubleDamage(cardOne));
-            map.put("card_two", havledDamage(cardTwo));
+            map.put("card_two", halvedDamage(cardTwo));
         }else if (cardOneName.contains("Fire") & cardTwoName.contains("Water") ||
                 cardOneName.contains("Regular") & cardTwoName.contains("Fire") ||
                 cardOneName.contains("Water") & cardTwoName.contains("Regular")) {
-            map.put("card_one", havledDamage(cardOne));
+            map.put("card_one", halvedDamage(cardOne));
             map.put("card_two", doubleDamage(cardTwo));
             // knight vs water
         }else if (cardOneName.contains("Knight") & cardTwoName.contains("Water") ){
@@ -279,7 +279,7 @@ public class Battle {
         return map;
     }
 
-    public static float havledDamage (Card card){
+    public static float halvedDamage (Card card){
         return card.getDamage()/2;
     }
 
