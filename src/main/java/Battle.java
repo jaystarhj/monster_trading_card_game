@@ -102,11 +102,11 @@ public class Battle {
         float cardTwoDamageNew = 0;
 
 
-        // pure monster flights
+        // pure monster fights
         if (cardOneType.equals("monster") & cardTwoType.equals("monster")){
             cardOneDamageNew = cardOne.getDamage();
             cardTwoDamageNew = cardTwo.getDamage();
-            // pure spell flights
+            // pure spell fights
         }else if (cardOneType.equals("spell") & cardTwoType.equals("spell")){
             // transform damage
             HashMap<String, Float> map = transformSpellDamage(cardOne, cardTwo);
