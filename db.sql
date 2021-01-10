@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS userTable
     password VARCHAR(50)        NOT NULL,
     bio      VARCHAR(50),
     image    VARCHAR(50),
-    coin     int4 default 20);
+    coin     int4 default 20,
+    battle_status bool default false);
 
 
 DROP TABLE IF exists deck cascade;
@@ -41,9 +42,9 @@ CREATE TABLE IF NOT EXISTS deck(
 DROP TABLE IF exists stats cascade;
 CREATE TABLE IF NOT EXISTS stats(
                                     id serial PRIMARY KEY,
-                                    win int4,
-                                    loss int4,
-                                    Elo int4 not null default 100,
+                                    win int4 default 0,
+                                    loss int4 default 0,
+                                    draw int4 default 0,
                                     user_id int4 not null unique references usertable (id));
 
 DROP TABLE IF exists store cascade;

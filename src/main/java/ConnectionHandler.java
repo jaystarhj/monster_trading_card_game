@@ -210,7 +210,16 @@ public class ConnectionHandler extends Thread{
 
         // write message to client
         try {
-            outputStream.write(responseData(headJSon, bodyJSON).toString().getBytes("UTF-8"));
+            int length = responseData(headJSon, bodyJSON).toString().length();
+            String reponseHeader = "HTTP/1.0 200 OK\r\n" +
+                    "Content-Length: " + length + "\r\n" +
+                    "Content-Type: application/json\r\n\r\n";
+            System.out.println((reponseHeader + responseData(headJSon, bodyJSON).toString()));
+            outputStream.write((reponseHeader + responseData(headJSon, bodyJSON).toString()).getBytes("UTF-8"));
+//            outputStream.write(responseData(headJSon, bodyJSON).toString().getBytes("UTF-8"));
+            outputStream.flush();
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }
