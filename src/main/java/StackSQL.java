@@ -19,7 +19,6 @@ public class StackSQL {
                 // get cards by user
                 List<Card> cardList = CardSQL.getCardsFromPackByUser(headJSON);
                 if (cardList != null){
-                    System.out.println(cardList);
                     // iterate JSON Arrays
                     for (int i=0; i<cardList.size(); i++) {
                         Card item = cardList.get(i);

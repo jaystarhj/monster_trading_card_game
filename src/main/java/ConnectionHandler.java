@@ -39,14 +39,12 @@ public class ConnectionHandler extends Thread{
         }
         JSONObject headerJson = parseHeader(headStrBuilder.toString());
         resultMap.put("head", headerJson);
-        System.out.println(headStrBuilder.toString());
 
         // read body
         if (hasBody){
             char[] body = new char[bodyLength];
             bufferedReader.read(body, 0, bodyLength);
             requestBody = new String(body);
-            System.out.println(requestBody);
 
             if (requestBody.contains("[")){
                 JSONArray bodyJSONArray = new JSONArray(requestBody);
@@ -210,13 +208,10 @@ public class ConnectionHandler extends Thread{
 
         // write message to client
         try {
-            int length = responseData(headJSon, bodyJSON).toString().length();
+            String responsebody = responseData(headJSon, bodyJSON).toString();
             String reponseHeader = "HTTP/1.0 200 OK\r\n" +
-                    "Content-Length: " + length + "\r\n" +
                     "Content-Type: application/json\r\n\r\n";
-            System.out.println((reponseHeader + responseData(headJSon, bodyJSON).toString()));
-            outputStream.write((reponseHeader + responseData(headJSon, bodyJSON).toString()).getBytes("UTF-8"));
-//            outputStream.write(responseData(headJSon, bodyJSON).toString().getBytes("UTF-8"));
+            outputStream.write((reponseHeader + responsebody).getBytes("UTF-8"));
             outputStream.flush();
 
 

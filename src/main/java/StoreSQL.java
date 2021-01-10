@@ -33,7 +33,6 @@ public class StoreSQL {
                             Store t = new Store();
                             t.setCard(c);
                             t.setUser(u);
-                            System.out.println(t.toString());
                             mJsonArray.put(new JSONObject(t.toString()));
                         }
                         while (rs.next());

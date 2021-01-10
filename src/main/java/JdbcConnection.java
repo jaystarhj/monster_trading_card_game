@@ -12,11 +12,11 @@ class JdbcConnection {
     public static Connection getConnection () throws ClassNotFoundException {
         // 参数：
         // jdbc协议:postgresql子协议://主机地址:数据库端口号/要连接的数据库名
-        String url = "jdbc:postgresql://localhost:5432/MTCG-test";
+        String url = "jdbc:postgresql://localhost:5432/monster_trading_card_game";
         // 数据库用户名Databank username
-        String user = "postgres";
+        String user = "demo";
         // 数据库密码password
-        String password = "123";
+        String password = "demo";
 
         // 1.加载驱动drive
         Class.forName("org.postgresql.Driver");
